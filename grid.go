@@ -103,7 +103,7 @@ func (this *Grid) GetCellByPosition(x, y int32) *Cell {
 
 // GetCellById 根据 Cell id 获取 Cell
 func (this *Grid) GetCellById(cellId int32) *Cell {
-	if cellId > int32(len(this.cells))-1 {
+	if cellId > int32(len(this.cells))-1 || cellId < 0 {
 		return nil
 	}
 	return this.cells[cellId]
