@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	var grid = grid.NewGrid(10, 10, 1, 1)
+	var grid = grid.NewGrid(10, 10, grid.WithCellWidth(2), grid.WithCellHeight(10))
 	var xCount, yCount = grid.GetCellSize()
 
 	for y := int32(0); y < yCount; y++ {

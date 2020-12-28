@@ -6,9 +6,21 @@ import (
 
 type Option func(grid *Grid)
 
-func WithCell(f func(id, x, y, minX, minY, maxX, maxY int32) Cell) Option {
+func WithCellMaker(f func(id, x, y, minX, minY, maxX, maxY int32) Cell) Option {
 	return func(grid *Grid) {
 		grid.nCellFunc = f
+	}
+}
+
+func WithCellWidth(width int32) Option {
+	return func(grid *Grid) {
+		grid.cellWidth = width
+	}
+}
+
+func WithCellHeight(height int32) Option {
+	return func(grid *Grid) {
+		grid.cellHeight = height
 	}
 }
 
@@ -37,37 +49,41 @@ type Grid struct {
 // var g = NewGrid(5, 5, 1, 1)，总共会产生 25 个格子
 // 则第一个格子(左上角)的坐标范围为 (0, 0) - (0, 0), 最后一个格子(右下角)的坐标范围为 (4, 4) - (4, 4)
 
-func NewGrid(width, height, cellWidth, cellHeight int32, opts ...Option) *Grid {
+func NewGrid(width, height int32, opts ...Option) *Grid {
 	var a = &Grid{}
 	a.width = width
 	a.height = height
-	a.cellWidth = cellWidth
-	a.cellHeight = cellHeight
-	a.cellXCount = a.width / cellWidth
-	a.cellYCount = a.height / cellHeight
-	if a.width%cellWidth > 0 {
-		a.cellXCount += 1
-	}
-	if a.height%cellHeight > 0 {
-		a.cellYCount += 1
-	}
-	a.cells = make([]Cell, a.cellXCount*a.cellYCount)
 
 	for _, opt := range opts {
 		opt(a)
 	}
-
 	if a.nCellFunc == nil {
 		a.nCellFunc = NewCell
 	}
+	if a.cellWidth <= 0 {
+		a.cellWidth = 1
+	}
+	if a.cellHeight <= 0 {
+		a.cellHeight = 1
+	}
+
+	a.cellXCount = a.width / a.cellWidth
+	a.cellYCount = a.height / a.cellHeight
+	if a.width%a.cellWidth > 0 {
+		a.cellXCount += 1
+	}
+	if a.height%a.cellHeight > 0 {
+		a.cellYCount += 1
+	}
+	a.cells = make([]Cell, a.cellXCount*a.cellYCount)
 
 	for y := int32(0); y < a.cellYCount; y++ {
 		for x := int32(0); x < a.cellXCount; x++ {
 			var cId = x + y*a.cellXCount
-			var minX = x * cellWidth
-			var maxX = (x+1)*cellWidth - 1
-			var minY = y * cellHeight
-			var maxY = (y+1)*cellHeight - 1
+			var minX = x * a.cellWidth
+			var maxX = (x+1)*a.cellWidth - 1
+			var minY = y * a.cellHeight
+			var maxY = (y+1)*a.cellHeight - 1
 			if maxX >= a.width {
 				maxX = a.width - 1
 			}
