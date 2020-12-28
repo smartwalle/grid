@@ -1,6 +1,26 @@
 package grid
 
-type Cell struct {
+type Cell interface {
+	GetId() int32
+
+	GetX() int32
+
+	GetY() int32
+
+	GetMinX() int32
+
+	GetMaxX() int32
+
+	GetMinY() int32
+
+	GetMaxY() int32
+
+	GetWidth() int32
+
+	GetHeight() int32
+}
+
+type nCell struct {
 	id   int32
 	x    int32
 	y    int32
@@ -10,8 +30,8 @@ type Cell struct {
 	maxY int32
 }
 
-func NewCell(id, x, y, minX, minY, maxX, maxY int32) *Cell {
-	var cell = &Cell{}
+func NewCell(id, x, y, minX, minY, maxX, maxY int32) Cell {
+	var cell = &nCell{}
 	cell.id = id
 	cell.x = x
 	cell.y = y
@@ -22,43 +42,43 @@ func NewCell(id, x, y, minX, minY, maxX, maxY int32) *Cell {
 	return cell
 }
 
-func (this *Cell) GetId() int32 {
+func (this *nCell) GetId() int32 {
 	return this.id
 }
 
-func (this *Cell) GetX() int32 {
+func (this *nCell) GetX() int32 {
 	return this.x
 }
 
-func (this *Cell) GetY() int32 {
+func (this *nCell) GetY() int32 {
 	return this.y
 }
 
-func (this *Cell) GetMinX() int32 {
+func (this *nCell) GetMinX() int32 {
 	return this.minX
 }
 
-func (this *Cell) GetMaxX() int32 {
+func (this *nCell) GetMaxX() int32 {
 	return this.maxX
 }
 
-func (this *Cell) GetMinY() int32 {
+func (this *nCell) GetMinY() int32 {
 	return this.minY
 }
 
-func (this *Cell) GetMaxY() int32 {
+func (this *nCell) GetMaxY() int32 {
 	return this.maxY
 }
 
-func (this *Cell) GetWidth() int32 {
+func (this *nCell) GetWidth() int32 {
 	return this.maxX - this.minX + 1
 }
 
-func (this *Cell) GetHeight() int32 {
+func (this *nCell) GetHeight() int32 {
 	return this.maxY - this.minY + 1
 }
 
-//func (this *Cell) String() string {
+//func (this *nCell) String() string {
 //	//return fmt.Sprintf("[%3d (%.3d,%.3d)-(%.3d,%.3d)]", this.GetId(), this.GetMinX(), this.GetMinY(), this.GetMaxX(), this.GetMaxY())
 //	return fmt.Sprintf("[%3d (%.3d,%.3d)]", this.GetId(), this.GetMinX(), this.GetMinY())
 //}

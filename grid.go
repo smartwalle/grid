@@ -4,14 +4,23 @@ import (
 	"math"
 )
 
+type Option func(grid *Grid)
+
+func WithCell(f func(id, x, y, minX, minY, maxX, maxY int32) Cell) Option {
+	return func(grid *Grid) {
+		grid.nCellFunc = f
+	}
+}
+
 type Grid struct {
+	nCellFunc  func(id, x, y, minX, minY, maxX, maxY int32) Cell
 	width      int32
 	height     int32
 	cellWidth  int32
 	cellHeight int32
 	cellXCount int32
 	cellYCount int32
-	cells      []*Cell
+	cells      []Cell
 }
 
 // NewGrid 创建新的网格，网络的初始坐标点为 (0, 0)
@@ -28,7 +37,7 @@ type Grid struct {
 // var g = NewGrid(5, 5, 1, 1)，总共会产生 25 个格子
 // 则第一个格子(左上角)的坐标范围为 (0, 0) - (0, 0), 最后一个格子(右下角)的坐标范围为 (4, 4) - (4, 4)
 
-func NewGrid(width, height, cellWidth, cellHeight int32) *Grid {
+func NewGrid(width, height, cellWidth, cellHeight int32, opts ...Option) *Grid {
 	var a = &Grid{}
 	a.width = width
 	a.height = height
@@ -42,7 +51,15 @@ func NewGrid(width, height, cellWidth, cellHeight int32) *Grid {
 	if a.height%cellHeight > 0 {
 		a.cellYCount += 1
 	}
-	a.cells = make([]*Cell, a.cellXCount*a.cellYCount)
+	a.cells = make([]Cell, a.cellXCount*a.cellYCount)
+
+	for _, opt := range opts {
+		opt(a)
+	}
+
+	if a.nCellFunc == nil {
+		a.nCellFunc = NewCell
+	}
 
 	for y := int32(0); y < a.cellYCount; y++ {
 		for x := int32(0); x < a.cellXCount; x++ {
@@ -57,7 +74,7 @@ func NewGrid(width, height, cellWidth, cellHeight int32) *Grid {
 			if maxY >= a.height {
 				maxY = a.height - 1
 			}
-			var cell = NewCell(cId, x, y, minX, minY, maxX, maxY)
+			var cell = a.nCellFunc(cId, x, y, minX, minY, maxX, maxY)
 			a.cells[cId] = cell
 		}
 	}
@@ -80,13 +97,13 @@ func (this *Grid) GetCellHeight() int32 {
 	return this.cellHeight
 }
 
-// GetCellSize 获取 Cell 横/纵的数量
+// GetCellSize 获取 nCell 横/纵的数量
 func (this *Grid) GetCellSize() (int32, int32) {
 	return this.cellXCount, this.cellYCount
 }
 
-// GetCellByPosition 根据坐标点获取 Cell
-func (this *Grid) GetCellByPosition(x, y int32) *Cell {
+// GetCellByPosition 根据坐标点获取 nCell
+func (this *Grid) GetCellByPosition(x, y int32) Cell {
 	if x < 0 || y < 0 {
 		return nil
 	}
@@ -94,29 +111,29 @@ func (this *Grid) GetCellByPosition(x, y int32) *Cell {
 		return nil
 	}
 
-	// 算出坐标所在 Cell
+	// 算出坐标所在 nCell
 	var CellX = x / this.cellWidth
 	var cellY = y / this.cellHeight
 
 	return this.GetCell(CellX, cellY)
 }
 
-// GetCellById 根据 Cell id 获取 Cell
-func (this *Grid) GetCellById(cellId int32) *Cell {
+// GetCellById 根据 nCell id 获取 nCell
+func (this *Grid) GetCellById(cellId int32) Cell {
 	if cellId > int32(len(this.cells))-1 || cellId < 0 {
 		return nil
 	}
 	return this.cells[cellId]
 }
 
-// GetCell 根据 Cell 的坐标获取 Cell
-func (this *Grid) GetCell(cellX, CellY int32) *Cell {
+// GetCell 根据 nCell 的坐标获取 nCell
+func (this *Grid) GetCell(cellX, CellY int32) Cell {
 	var cellId = cellX + CellY*this.cellXCount
 	return this.GetCellById(cellId)
 }
 
-// GetSurroundCellsByPosition 根据坐标点获取其周边的 Cell 列表
-func (this *Grid) GetSurroundCellsByPosition(x, y, round int32) []*Cell {
+// GetSurroundCellsByPosition 根据坐标点获取其周边的 nCell 列表
+func (this *Grid) GetSurroundCellsByPosition(x, y, round int32) []Cell {
 	if x < 0 || y < 0 {
 		return nil
 	}
@@ -124,16 +141,16 @@ func (this *Grid) GetSurroundCellsByPosition(x, y, round int32) []*Cell {
 		return nil
 	}
 
-	// 算出坐标所在 Cell
+	// 算出坐标所在 nCell
 	var CellX = x / this.cellWidth
 	var cellY = y / this.cellHeight
 
 	return this.GetSurroundCells(CellX, cellY, round)
 }
 
-// GetSurroundCellsById 根据 Cell id 获取其周边的 Cell 列表，包含指定 Cell 自身
+// GetSurroundCellsById 根据 nCell id 获取其周边的 nCell 列表，包含指定 nCell 自身
 // round - 指定获取几圈层的格子，为 1 的时候，取其自身加上周边 8 个格子，为 2 的时候，取其自身加上周边 24 个格子，以此类推
-func (this *Grid) GetSurroundCellsById(cellId int32, round int32) []*Cell {
+func (this *Grid) GetSurroundCellsById(cellId int32, round int32) []Cell {
 	if round <= 0 {
 		return nil
 	}
@@ -143,7 +160,7 @@ func (this *Grid) GetSurroundCellsById(cellId int32, round int32) []*Cell {
 	}
 
 	var cellCount = int(math.Pow(float64(1+round*2), 2))
-	var cells = make([]*Cell, 0, cellCount)
+	var cells = make([]Cell, 0, cellCount)
 
 	var startX = int32(math.Max(float64(cell.GetX()-round), 0))
 	var startY = int32(math.Max(float64(cell.GetY()-round), 0))
@@ -159,8 +176,8 @@ func (this *Grid) GetSurroundCellsById(cellId int32, round int32) []*Cell {
 	return cells
 }
 
-// GetSurroundCells 根据 Cell 的坐标获取其周边的 Cell 列表
-func (this *Grid) GetSurroundCells(cellX, CellY, round int32) []*Cell {
+// GetSurroundCells 根据 nCell 的坐标获取其周边的 nCell 列表
+func (this *Grid) GetSurroundCells(cellX, CellY, round int32) []Cell {
 	var cellId = cellX + CellY*this.cellXCount
 	return this.GetSurroundCellsById(cellId, round)
 }
