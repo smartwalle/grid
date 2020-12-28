@@ -2,22 +2,21 @@ package main
 
 import (
 	"fmt"
-	"github.com/smartwalle/grid"
+	"github.com/smartwalle/zone"
 )
 
 func main() {
-	var grid = grid.NewGrid(10, 10, grid.WithCellWidth(2), grid.WithCellHeight(10))
-	var xCount, yCount = grid.GetCellSize()
+	var nZone = zone.NewZone(10, 10)
+	var xCount, yCount = nZone.GetGridSize()
 
 	for y := int32(0); y < yCount; y++ {
 		for x := int32(0); x < xCount; x++ {
-			var cell = grid.GetCell(x, y)
-			fmt.Print(cell, " ")
+			var grid = nZone.GetGrid(x, y)
+			fmt.Print(grid, " ")
 		}
 		fmt.Println()
 	}
 
-	//grid.GetSurroundCellsById(21, 1)
-	var cells = grid.GetSurroundCellsByPosition(0, 0, 2)
-	fmt.Println(cells)
+	var grids = nZone.GetSurroundGridsByPosition(0, 0, 2)
+	fmt.Println(grids)
 }

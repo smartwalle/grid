@@ -1,3 +1,3 @@
-module github.com/smartwalle/grid
+module github.com/smartwalle/zone
 
 go 1.15
